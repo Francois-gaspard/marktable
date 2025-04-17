@@ -138,7 +138,7 @@ RSpec.describe Marktable::Table do
         | Jane | 25  | Boston   |
       MARKDOWN
       
-      expect(result).to eq(expected)
+      expect(result).to match_markdown(expected)
     end
     
     it 'handles data with varying cell lengths' do
@@ -157,7 +157,7 @@ RSpec.describe Marktable::Table do
         | Longer Value | X                | Y           |
       MARKDOWN
       
-      expect(result).to eq(expected)
+      expect(result).to match_markdown(expected)
     end
     
     it 'generates proper markdown table from array data with headers: false' do
@@ -177,7 +177,7 @@ RSpec.describe Marktable::Table do
         | Jane | 25  | Boston   |
       MARKDOWN
       
-      expect(result).to eq(expected)
+      expect(result).to match_markdown(expected)
     end
   end
 end

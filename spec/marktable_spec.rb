@@ -77,12 +77,14 @@ RSpec.describe Marktable do
         table << { "Name" => "Jane", "Age" => "25", "City" => "Boston" }
       end
       
-      expected = "| Name | Age | City |\n| --- | --- | --- |\n| John | 30 | New York |\n| Jane | 25 | Boston |"
-      # Normalize whitespace for comparison
-      normalized_result = result.gsub(/\s+\|/, ' |').gsub(/\|\s+/, '| ')
-      normalized_expected = expected.gsub(/\s+\|/, ' |').gsub(/\|\s+/, '| ')
+      expected = <<~MARKDOWN.chomp
+        | Name | Age | City     |
+        | ---- | --- | -------- |
+        | John | 30  | New York |
+        | Jane | 25  | Boston   |
+      MARKDOWN
       
-      expect(normalized_result).to eq(normalized_expected)
+      expect(result).to match_markdown(expected)
     end
     
     it 'generates a table with provided headers' do
@@ -92,16 +94,21 @@ RSpec.describe Marktable do
         table << { "Name" => "Jane", "Age" => "25", "City" => "Boston" }
       end
       
-      expect(result).to include("| Name | Age | City |")
+      expect(result).to match_markdown(markdown_table)
     end
   end
 
   describe '.filter' do
     it 'filters rows matching a pattern' do
       result = described_class.filter(markdown_table, /John/)
-      expect(result.to_a).to eq([
-        { "Name" => "John", "Age" => "30", "City" => "New York" }
-      ])
+      
+      expected = <<~MARKDOWN.chomp
+        | Name | Age | City     |
+        | ---- | --- | -------- |
+        | John | 30  | New York |
+      MARKDOWN
+      
+      expect(result).to match_markdown(expected)
     end
   end
 
@@ -112,10 +119,14 @@ RSpec.describe Marktable do
         row
       end
       
-      expect(result.to_a).to eq([
-        { "Name" => "John", "Age" => 31, "City" => "New York" },
-        { "Name" => "Jane", "Age" => 26, "City" => "Boston" }
-      ])
+      expected = <<~MARKDOWN.chomp
+        | Name | Age | City     |
+        | ---- | --- | -------- |
+        | John | 31  | New York |
+        | Jane | 26  | Boston   |
+      MARKDOWN
+      
+      expect(result).to match_markdown(expected)
     end
   end
 end

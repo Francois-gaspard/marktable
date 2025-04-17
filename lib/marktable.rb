@@ -11,16 +11,20 @@ module Marktable
 
   # Parse a single markdown row into an array of cell values
   def self.parse_line(markdown_row)
-    markdown_row.strip.sub(/^\|/, '').sub(/\|$/, '').split('|').map(&:strip)
+    Row.parse(markdown_row)
   end
 
   # Iterate through each row of a markdown table
   def self.foreach(markdown_table, headers: true)
     table = Table.new(markdown_table, headers: headers)
-    return table.enum_for(:each) unless block_given?
+    return Enumerator.new do |yielder|
+      table.each do |row|
+        yielder << row.data
+      end
+    end unless block_given?
     
     table.each do |row|
-      yield row
+      yield row.data
     end
   end
 
@@ -34,14 +38,17 @@ module Marktable
       yield table_data
       
       unless table_data.empty?
-        # Create a Table object to leverage the proper formatting
-        table = table(table_data, headers: headers.nil? ? true : false)
-        
-        # Set headers if provided
-        if headers
-          table.instance_variable_set(:@header_row, headers.each_with_object({}) { |k, h| h[k] = k })
-          table.instance_variable_set(:@headers, true)
+        # Ensure all data is stringified
+        string_data = table_data.map do |row|
+          if row.is_a?(Hash)
+            row.transform_values(&:to_s)
+          else
+            row.map(&:to_s)
+          end
         end
+        
+        # Create a Table object
+        table = table(string_data, headers: headers.nil? ? true : headers)
         
         markdown_table = table.generate
       end
@@ -61,9 +68,7 @@ module Marktable
     content = if table_or_data.is_a?(Table)
                 table_or_data.to_s
               else
-                generate do |csv|
-                  table_or_data.each { |row| csv << row }
-                end
+                table(table_or_data).to_s
               end
     
     File.write(path, content)
@@ -73,12 +78,24 @@ module Marktable
   def self.table(array, headers: true)
     table = Table.new([], headers: headers)
     
-    if headers && array.first.is_a?(Hash)
-      header_keys = array.first.keys
+    # Ensure all data values are strings
+    string_array = array.map do |row|
+      # Handle Row instances by extracting their data
+      if row.is_a?(Row)
+        row.data
+      elsif row.is_a?(Hash)
+        row.transform_values(&:to_s)
+      else
+        row.map(&:to_s)
+      end
+    end
+    
+    if headers && string_array.first.is_a?(Hash)
+      header_keys = string_array.first.keys
       table.instance_variable_set(:@header_row, header_keys.each_with_object({}) { |k, h| h[k] = k })
-      table.instance_variable_set(:@rows, array.map { |row_data| Row.new(row_data, headers: header_keys) })
+      table.instance_variable_set(:@rows, string_array.map { |row_data| Row.new(row_data, headers: header_keys) })
     else
-      table.instance_variable_set(:@rows, array.map { |row_data| Row.new(row_data, headers: nil) })
+      table.instance_variable_set(:@rows, string_array.map { |row_data| Row.new(row_data, headers: nil) })
     end
     
     table
@@ -98,13 +115,20 @@ module Marktable
     table(filtered_rows, headers: headers)
   end
 
-  # Map over rows
+  # Map over rows (all values will be converted to strings)
   def self.map(markdown_table, headers: true)
     table = Table.new(markdown_table, headers: headers)
     mapped_rows = []
     
     table.each do |row|
-      mapped_rows << yield(row)
+      result = yield(row)
+      # Ensure result is string-compatible
+      if result.is_a?(Hash)
+        result = result.transform_values(&:to_s)
+      elsif result.is_a?(Array)
+        result = result.map(&:to_s)
+      end
+      mapped_rows << result
     end
     
     table(mapped_rows, headers: headers)
