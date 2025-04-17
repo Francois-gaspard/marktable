@@ -6,7 +6,7 @@ module Marktable
     
     attr_reader :headers
 
-    def initialize(markdown_table = [], headers: true)
+    def initialize(markdown_table = '', headers: true)
       @headers = headers
       @rows = []
       @header_row = nil
@@ -58,23 +58,22 @@ module Marktable
     def build_markdown_table(keys, column_widths)
       result = []
       
-      # Get separator row and adjusted column widths
-      separator, adjusted_widths = Row.separator_row(column_widths)
-      
       # Add header row
-      result << row_to_markdown(keys, adjusted_widths)
+      result << row_to_markdown(keys, column_widths)
+      
+      # Add separator row
+      separator, _ = Row.separator_row(column_widths)
       result << separator
       
-      # Add data rows (skip first row if no headers and array data)
-      rows_to_render = data_rows_to_render
+      # Add data rows
       rows_to_render.each do |row|
-        result << row.to_markdown(adjusted_widths)
+        result << row.to_markdown(column_widths)
       end
       
       result.join("\n")
     end
 
-    def data_rows_to_render
+    def rows_to_render
       if !@headers && !@rows.first&.data.is_a?(Hash) && @rows.size > 1
         @rows[1..-1]
       else
@@ -145,7 +144,6 @@ module Marktable
     end
 
     # Generate markdown row from array of values with proper spacing
-    # Keep this method for now for backwards compatibility
     def row_to_markdown(values, column_widths)
       formatted_values = values.each_with_index.map do |val, i|
         val.to_s.ljust(column_widths[i])
