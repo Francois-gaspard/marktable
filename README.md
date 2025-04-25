@@ -2,17 +2,12 @@
 
 Marktable is a Ruby gem for easily converting between different table formats and testing table content in your specs.
 
-[View the full API documentation](docs/api_documentation.md)
-
 ## Table of Contents
 
 - [Features](#features)
 - [Installation](#installation)
-- [Usage](#usage)
-  - [RSpec Matchers](#rspec-matchers)
-  - [Converting Between Table Formats](#converting-between-table-formats)
-  - [Working with Tables](#working-with-tables)
-- [Unsupported](#unsupported)
+- [Basic Usage](#basic-usage)
+- [Documentation](#documentation)
 - [License](#license)
 
 ## Features
@@ -35,6 +30,58 @@ gem 'marktable'
 
 And then execute:
 
+```
+$ bundle install
+```
+
+Or install it yourself:
+
+```
+$ gem install marktable
+```
+
+## Basic Usage
+
+### RSpec Matchers
+
+```ruby
+# In your spec_helper.rb
+require 'marktable/rspec'
+
+# In your specs - compare tables across formats
+expect(markdown_table).to match_markdown(expected_markdown)
+
+html_table = page.find('#users-table')
+expect(html_table).to match_markdown(expected_markdown)
+```
+
+### Converting Between Formats
+
+```ruby
+# From markdown to other formats
+markdown = <<~MARKDOWN
+  | Name | Age  |
+  |------|----- |
+  | Alice | 30  |
+  | Bob   | 25  |
+MARKDOWN
+
+table = Marktable.from_markdown(markdown)
+
+table.to_a # Array of hashes
+table.to_csv # CSV string
+table.to_html # HTML table
+
+# From arrays or hashes to markdown
+data = [{ 'Name' => 'Alice', 'Age' => '30' }]
+Marktable.from_array(data).to_md # Markdown table
+```
+
+## Documentation
+
+* [Full Examples](docs/examples.md) - Detailed usage examples
+* [API Documentation](docs/api_documentation.md) - Complete API reference
+=======
 ```
 $ bundle install
 ```
@@ -188,105 +235,6 @@ arrays = [
   ['Bob', '25', 'London']
 ]
 puts Marktable.from_array(arrays).to_md
-# | Name  | Age | City     |
-# | Alice | 30  | New York |
-# | Bob   | 25  | London   |
-
-# From array of hashes
-hashes = [
-  { 'Name' => 'Alice', 'Age' => '30', 'City' => 'New York' },
-  { 'Name' => 'Bob', 'Age' => '25', 'City' => 'London' }
-]
-puts  Marktable.from_array(hashes).to_md
-# | Name  | Age | City     |
-# | ----- | --- | -------- |
-# | Alice | 30  | New York |
-# | Bob   | 25  | London   |
-```
-
-#### From CSV
-
-```ruby
-csv_data = <<~CSV
-  Name,Age,City
-  Alice,30,New York
-  Bob,25,London
-CSV
-
-table = Marktable.from_csv(csv_data, headers: true)
-
-# Or with a CSV::Table
-csv_table = CSV::Table.parse(csv_data)
-table = Marktable.from_csv(csv_table)
-```
-
-#### From HTML
-
-```ruby
-html = <<~HTML
-  <table>
-    <thead><tr>
-      <th>Name</th>
-      <th>Age</th>
-      <th>City</th>
-    </tr></thead>
-    <tbody>
-      <tr>
-        <td>Alice</td>
-        <td>30</td>
-        <td>New York</td>
-      </tr>
-      <tr>
-        <td>Bob</td>
-        <td>25</td>
-        <td>London</td>
-      </tr>
-    </tbody>
-  </table>
-HTML
-
-puts Marktable.from_html(html).to_md
-# | Name  | Age | City     |
-# |-------| --- | -------- |
-# | Alice | 30  | New York |
-# | Bob   | 25  | London   |
-
-```
-
-### Working with Tables
-
-```ruby
-# Access rows by index
-row = table[0]  # First row
-row['Name']     # => "Alice"
-
-# Iterate through rows
-table.each do |row|
-  puts "#{row['Name']} is #{row['Age']} years old"
-end
-
-# Get table size
-table.size      # => 2
-table.empty?    # => false
-
-# Modify rows
-
-table.map do |row|
-  row['Age'] = row['Age'].to_i + 1
-end
-
-puts table.to_md
-# | Name  | Age | City     |
-# | ----- | --- | -------- |
-# | Alice | 31  | New York |
-# | Bob   | 26  | London   |
-```
-
-## Unsupported:
-
-* Nested tables
-* Complex HTML tables (e.g., with colspan or rowspan)
-* Custom delimiters in CSV
 
 ## License
 
