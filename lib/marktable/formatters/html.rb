@@ -23,7 +23,7 @@ module Marktable
             doc.tbody do
               rows.each do |row|
                 doc.tr do
-                  row.each_value do |cell|
+                  row.values.each do |cell|
                     doc.td do
                       cell_text = cell.to_s
                       if cell_text.include?('\n')
