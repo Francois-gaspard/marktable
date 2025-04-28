@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# frozen_string_literal: true
-
 require 'spec_helper'
 
 RSpec.describe 'match_markdown matcher' do

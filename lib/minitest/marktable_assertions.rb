@@ -2,9 +2,12 @@
 
 require 'minitest/assertions'
 require 'marktable'
+require_relative '../marktable/matchers_core'
 
 module Minitest
   module MarktableAssertions
+    include ::Marktable::MatchersCore
+    
     # Asserts that two markdown tables or equivalent data structures match.
     #
     # @param expected_markdown [String, Array] The expected markdown table or data
@@ -45,40 +48,10 @@ module Minitest
       actual_data = parse_input(actual, format)
       
       message = message(msg) do
-        "Expected markdown tables to differ, but they match:\n\n" \
-        "#{actual_data.to_md}"
+        format_negated_failure_message(actual_data)
       end
       
       refute_equal expected_data.to_a, actual_data.to_a, message
-    end
-    
-    private
-    
-    def parse_input(input, format = nil)
-      return input if input.is_a?(::Marktable::Table)
-      
-      ::Marktable::Table.new(input, type: format)
-    end
-    
-    def infer_format(data)
-      case data
-      when Array
-        :array
-      when CSV::Table
-        :csv
-      when ::Marktable::Table
-        :markdown
-      else
-        :markdown
-      end
-    end
-    
-    def format_failure_message(expected_data, actual_data)
-      "Expected markdown table to match:\n\n" \
-      "Expected:\n#{expected_data.to_md}\n\n" \
-      "Actual:\n#{actual_data.to_md}\n\n" \
-      "Parsed expected data: #{expected_data.to_a.inspect}\n" \
-      "Parsed actual data: #{actual_data.to_a.inspect}"
     end
   end
 end
