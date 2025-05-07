@@ -22,3 +22,5 @@ module Marktable
     Table.new(table, type: :html)
   end
 end
+
+require_relative 'marktable/rspec' if defined?(RSpec) || defined?(::RSpec::Core)

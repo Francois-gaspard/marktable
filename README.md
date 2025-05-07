@@ -60,8 +60,8 @@ expect(html_table).to match_markdown(expected_markdown)
 ```ruby
 # From markdown to other formats
 markdown = <<~MARKDOWN
-  | Name | Age  |
-  |------|----- |
+  | Name  | Age |
+  |------ | --- |
   | Alice | 30  |
   | Bob   | 25  |
 MARKDOWN

@@ -197,4 +197,132 @@ RSpec.describe Marktable::Table do
       expect(table.to_md).to match_markdown(@markdown)
     end
   end
+
+  context 'with HTML that contains whitespace and newline issues' do
+    it 'handles newlines in cell content' do
+      html_with_newlines = <<~HTML
+        <table>
+          <tr>
+            <th>Recipe</th>
+            <th>Cuisine</th>
+            <th>Cooking Methods</th>
+          </tr>
+          <tr>
+            <td>Lasagna</td>
+            <td>Italian</td>
+            <td>Bake
+                Simmer</td>
+          </tr>
+        </table>
+      HTML
+
+      expected_markdown = <<~MARKDOWN
+        | Recipe  | Cuisine | Cooking Methods |
+        | ------- | ------- | --------------- |
+        | Lasagna | Italian | Bake Simmer     |
+      MARKDOWN
+
+      table = described_class.new(html_with_newlines, type: :html)
+      expect(table.to_md).to match_markdown(expected_markdown)
+    end
+
+    it 'preserves spaces in JSON content' do
+      html_with_json = <<~HTML
+        <table>
+          <tr>
+            <th>Recipe</th>
+            <th>Recipe Notes</th>
+          </tr>
+          <tr>
+            <td>Chocolate Cake</td>
+            <td>
+              {   "preparation_time": "45 minutes" }
+            </td>
+          </tr>
+        </table>
+      HTML
+
+      expected_markdown = <<~MARKDOWN
+        | Recipe         | Recipe Notes                           |
+        | -------------- | -------------------------------------- |
+        | Chocolate Cake | { "preparation_time": "45 minutes" }   |
+      MARKDOWN
+
+      table = described_class.new(html_with_json, type: :html)
+      expect(table.to_md).to match_markdown(expected_markdown)
+    end
+
+    it 'handles complex nested HTML with JSON and text' do
+      complex_html = <<~HTML
+        <table>
+          <tr>
+            <th>Book Title</th>
+            <th>Publication Details</th>
+            <th>Genres</th>
+          </tr>
+          <tr>
+            <td>The Great Adventure</td>
+            <td>
+              <div data-controller="copyable-content">
+                <div class="float-right">
+                  <a style="cursor: pointer;" data-action="click->copyable-content#perform" title="Copy">
+                    <i class="material-icons">content_copy</i>
+                  </a>
+                </div>
+                <pre data-copyable-content-target="copyableData" title='{   "year": 2023, "publisher": "Bookworm Press" }'>{   "year": 2023, "publisher": "Bookworm Press" }</pre>
+              </div>
+            </td>
+            <td>
+              <h2>
+                <span class="badge rounded-pill bg-success">adventure</span>
+                <span class="badge rounded-pill bg-success">fantasy</span>
+              </h2>
+            </td>
+          </tr>
+        </table>
+      HTML
+
+      expected_markdown = <<~MARKDOWN
+        | Book Title          | Publication Details                                          | Genres            |
+        | ------------------- | ------------------------------------------------------------ | ----------------- |
+        | The Great Adventure | content_copy { "year": 2023, "publisher": "Bookworm Press" } | adventure fantasy |
+      MARKDOWN
+
+      table = described_class.new(complex_html, type: :html)
+      expect(table.to_md).to match_markdown(expected_markdown)
+    end
+
+    it 'handles whitespace in tables with multiple cells and rows' do
+      html_with_whitespace = <<~HTML
+        <table>
+          <tr>
+            <th>  Planet  </th>
+            <th>  Features   </th>
+          </tr>
+          <tr>
+            <td>   Mars    </td>
+            <td>
+              Red surface
+              with dust storms
+              and   polar   ice caps
+            </td>
+          </tr>
+          <tr>
+            <td>Venus</td>
+            <td>Dense atmosphere</td>
+          </tr>
+        </table>
+      HTML
+
+      expected_markdown = <<~MARKDOWN
+        | Planet | Features                                        |
+        | ------ | ----------------------------------------------- |
+        | Mars   | Red surface with dust storms and polar ice caps |
+        | Venus  | Dense atmosphere                                |
+      MARKDOWN
+
+      table = described_class.new(html_with_whitespace, type: :html)
+      expect(table.to_md).to match_markdown(expected_markdown)
+    end
+  end
 end
