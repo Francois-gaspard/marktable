@@ -14,7 +14,7 @@ module Marktable
       end
 
       def parse
-        return blank if table.nil? || rows.empty?
+        return Tables::Base.blank if table.nil? || rows.empty?
 
         if has_headers?
           headers = extract_row_cells(first_row)
@@ -48,7 +48,31 @@ module Marktable
       end
 
       def extract_row_cells(row)
-        row.css('th, td').map(&:text)
+        row.css('th, td').map do |cell|
+          # Get text content
+          text = cell.text
+          
+          # Handle JSON content specially to preserve important whitespace
+          if text.include?('{') && text.include?('}')
+            # Process JSON content more carefully
+            # 1. Remove newlines
+            # 2. Preserve spaces between JSON delimiters
+            # 3. Normalize other whitespace
+            json_content = text.gsub(/\r?\n/, ' ')        # Replace newlines with spaces
+                              .gsub(/(\{)\s*/, '\1 ')     # Ensure exactly one space after opening brace
+                              .gsub(/\s*(\})/, ' \1')     # Ensure exactly one space before closing brace
+                              .gsub(/\s+/, ' ')           # Collapse other consecutive whitespace
+                              .gsub(/\A\s+|\s+\z/, '')    # Trim leading/trailing whitespace
+                              .gsub(/\u00A0/, ' ')        # Replace &nbsp; with spaces
+            json_content
+          else
+            # For regular content
+            text.gsub(/\r?\n/, '')          # Remove all newlines completely
+                .gsub(/\s+/, ' ')           # Collapse consecutive whitespace
+                .gsub(/\A\s+|\s+\z/, '')    # Trim leading/trailing whitespace
+                .gsub(/\u00A0/, ' ')        # Replace &nbsp; with spaces
+          end
+        end
       end
 
       def first_row
