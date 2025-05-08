@@ -26,7 +26,7 @@ if defined?(RSpec)
 
     failure_message_when_negated do
       "Expected markdown tables to differ, but they match:\n\n" \
-        "#{@actual_data.to_md}"
+      "#{@actual_data.to_md}"
     end
 
     private
@@ -81,10 +81,10 @@ if defined?(RSpec)
 
     def format_failure_message(expected_data, actual_data)
       "Expected markdown table to match:\n\n" \
-        "Expected:\n#{expected_data.to_md}\n\n" \
-        "Actual:\n#{actual_data.to_md}\n\n" \
-        "Parsed expected data: #{expected_data.to_a.inspect}\n" \
-        "Parsed actual data: #{actual_data.to_a.inspect}"
+      "Expected:\n#{expected_data.to_md}\n\n" \
+      "Actual:\n#{actual_data.to_md}\n\n" \
+      "Parsed expected data: #{expected_data.to_a.inspect}\n" \
+      "Parsed actual data: #{actual_data.to_a.inspect}"
     end
   end
 end
