@@ -44,7 +44,7 @@ module Marktable
 
         csv_table.each do |csv_row|
           # Convert CSV::Row to hash then to our Row
-          row_data = csv_row.to_h
+          row_data = csv_row.to_h.transform_values { |v| v.nil? ? '' : v }
           rows << Row.new(row_data, headers: headers)
         end
 
@@ -56,10 +56,12 @@ module Marktable
 
         if csv_table.is_a?(::CSV::Table)
           csv_table.each do |csv_row|
-            rows << Row.new(csv_row.fields)
+            fields = csv_row.fields.map { |v| v.nil? ? '' : v }
+            rows << Row.new(fields)
           end
         else
           csv_table.each do |fields|
+            fields = fields.map { |v| v.nil? ? '' : v }
             rows << Row.new(fields)
           end
         end

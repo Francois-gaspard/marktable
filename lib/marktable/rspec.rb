@@ -11,6 +11,10 @@ if defined?(RSpec)
       @format = format
     end
 
+    chain :ignore_headers do 
+      @headers = false
+    end
+
     match do |actual|
       @expected_data = parse_input(expected_markdown, :markdown)
       @format ||= infer_format(actual)
@@ -36,8 +40,7 @@ if defined?(RSpec)
 
       # Handle both Capybara::Node::Element and Capybara::Node::Simple
       if capybara?(input)
-        # Convert Capybara element to Nokogiri element or HTML
-        input = input.native
+        input = parse_capybara_html(input)
         format = :html
       end
 
@@ -47,11 +50,26 @@ if defined?(RSpec)
         format = :html
       end
 
-      Marktable::Table.new(input, type: format)
+      # Pass headers option if it was specified in the chain
+      options = { type: format }
+      options[:headers] = @headers unless @headers.nil?
+      Marktable::Table.new(input, **options)
     end
 
     def html?(data)
       nokogiri?(data) || capybara?(data)
+    end
+
+    def parse_capybara_html(data)
+      rows = data.all('tr').map do |row|
+        cells = row.all('th,td').map do |cell|
+          cell_text = cell.text.tr("\n", ' ').strip
+          cell_type = cell.tag_name
+          "<#{cell_type}>#{cell_text}</#{cell_type}>"
+        end
+        "<tr>#{cells.join}</tr>"
+      end
+      "<table>#{rows.join}</table>"
     end
 
     def capybara?(data)
