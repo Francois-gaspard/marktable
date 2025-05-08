@@ -13,8 +13,8 @@ module Marktable
       result = parser.parse
       @rows = result.rows
       @headers = result.headers
-      # Validate headers if present
-      validate_headers if @headers
+      # Validate headers if present and not explicitly disabled
+      validate_headers if @headers && headers != false
       # Fix: Initialize @has_headers based on whether @headers is present
       @has_headers = !@headers.nil?
     end

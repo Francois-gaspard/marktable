@@ -47,44 +47,24 @@ module Marktable
         end
       end
 
-      def extract_row_cells(row)
-        row.css('th, td').map do |cell|
-          # Get text content
-          text = cell.text
-          
-          # Handle JSON content specially to preserve important whitespace
-          if text.include?('{') && text.include?('}')
-            # Process JSON content more carefully
-            # 1. Remove newlines
-            # 2. Preserve spaces between JSON delimiters
-            # 3. Normalize other whitespace
-            json_content = text.gsub(/\r?\n/, ' ')        # Replace newlines with spaces
-                              .gsub(/(\{)\s*/, '\1 ')     # Ensure exactly one space after opening brace
-                              .gsub(/\s*(\})/, ' \1')     # Ensure exactly one space before closing brace
-                              .gsub(/\s+/, ' ')           # Collapse other consecutive whitespace
-                              .gsub(/\A\s+|\s+\z/, '')    # Trim leading/trailing whitespace
-                              .gsub(/\u00A0/, ' ')        # Replace &nbsp; with spaces
-            json_content
-          else
-            # For regular content
-            text.gsub(/\r?\n/, '')          # Remove all newlines completely
-                .gsub(/\s+/, ' ')           # Collapse consecutive whitespace
-                .gsub(/\A\s+|\s+\z/, '')    # Trim leading/trailing whitespace
-                .gsub(/\u00A0/, ' ')        # Replace &nbsp; with spaces
-          end
-        end
+      def rows
+        @rows ||= table.css('tr')
       end
 
       def first_row
-        @first_row ||= rows.first
+        rows.first
       end
 
       def has_headers?
-        @has_headers ||= first_row.css('th').any? || @headers_flag
+        return false if @headers_flag == false
+        return true if @headers_flag == true
+
+        # Auto-detect headers if not explicitly specified
+        first_row&.css('th').any?
       end
 
-      def rows
-        @rows ||= table.css('tr')
+      def extract_row_cells(row)
+        row.css('th, td').map { |cell| cell.text.tr("\n", ' ').strip }
       end
     end
   end

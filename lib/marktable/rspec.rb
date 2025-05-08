@@ -6,19 +6,17 @@ require 'marktable'
 
 # Register the matchers if RSpec is defined
 if defined?(RSpec)
-  RSpec::Matchers.define :match_markdown do |expected_markdown|
+  RSpec::Matchers.define :match_markdown do |expected_markdown, ignore_headers: false|
+
     chain :with_format do |format|
       @format = format
     end
 
-    chain :ignore_headers do 
-      @headers = false
-    end
-
     match do |actual|
-      @expected_data = parse_input(expected_markdown, :markdown)
+      @ignore_headers = ignore_headers
       @format ||= infer_format(actual)
       @actual_data = parse_input(actual, @format)
+      @expected_data = parse_input(expected_markdown, :markdown)
 
       # Compare data using to_a for consistent comparison
       @actual_data.to_a == @expected_data.to_a
@@ -52,7 +50,7 @@ if defined?(RSpec)
 
       # Pass headers option if it was specified in the chain
       options = { type: format }
-      options[:headers] = @headers unless @headers.nil?
+      options[:headers] = false if @ignore_headers
       Marktable::Table.new(input, **options)
     end
 
