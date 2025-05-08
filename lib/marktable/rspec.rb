@@ -72,10 +72,8 @@ if defined?(RSpec)
         :csv
       when Marktable::Table
         :markdown
-      when html?(data)
-        :html
       else
-        :markdown
+        html?(data) ? :html : :markdown
       end
     end
 
